@@ -1,8 +1,8 @@
 package main
 
 import (
-	"KNIRVCHAIN-chain/constants"
-	knirvlog "KNIRVCHAIN-chain/log"
+	"KNIRVCHAIN-DEV/constants"
+	knirvlog "KNIRVCHAIN-DEV/log"
 	"flag"
 	"fmt"
 	"log"

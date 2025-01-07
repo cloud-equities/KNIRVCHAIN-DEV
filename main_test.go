@@ -16,12 +16,14 @@ func TestChainStartup(t *testing.T) {
 	defer os.RemoveAll(tempDir) // clean created resources
 	dbPath := filepath.Join(tempDir, "knirv.db")
 
-	cmd := exec.Command("go", "run", "main.go", "-port", "5000", "-miners_address", "testAddress", "-database_path", dbPath) // pass in port from configuration environment variables. since code will always know when method type requirements will call the method properly with type data using a parameter in struct methods or by interface data contracts that exist between the program implementation when calling these methods from those type signatures (where applicable and/or where they should be present during code use), while it's performing its test workflow as is designed.
+	// Updated to use the module import path correctly to specify root main go file execution within modules import location.
+	cmd := exec.Command("go", "run", "KNIRVCHAIN-DEV/main.go", "-port", "5000", "-miners_address", "testAddress", "-database_path", dbPath)
 
 	cmd.Dir = filepath.Join("..", "chain") // specify subdirectory for methods location. and scope when running, instead of relying on scope without knowing the intended use of local or method resources or struct or objects variables in memory, this means we can verify specific implementation to be called and that methods calls and struct use and methods or operations work for implementation by type.
 
 	if runtime.GOOS == "windows" { // check for systems to run based on local or os dependent types. this will only use a command implementation specific for what operating system types of file formats will call a method. For Linux use case: it would call just with one go run or go executable format for the file
-		cmd = exec.Command("go", "run", ".\\main.go", "-port", "5000", "-miners_address", "testAddress", "-database_path", dbPath)
+		// Same logic here for windows by replacing path if required, or just calling `main.go` as is if under a correct location or path, but making sure the go module root path location is also there with main.go being called using the go modules project/package root import path or name of that package/project or module declaration, when not under local package use for single compilation like so when a single file is defined, `go run main.go`, when this package, needs imports of packages or other file modules, the path of import has to also be used with the root go module declared for the project being tested during development.
+		cmd = exec.Command("go", "run", "KNIRVCHAIN-DEV/main.go", "-port", "5000", "-miners_address", "testAddress", "-database_path", dbPath)
 	}
 
 	output, err := cmd.CombinedOutput()
