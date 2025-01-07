@@ -6,6 +6,7 @@ import (
 	"encoding/binary"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"strings"
 	"time"
 )
@@ -18,6 +19,10 @@ type Block struct {
 	Transactions []*Transaction `json:"transactions"`
 	Data         *SmartContract `json:"smartcontract"`
 	BlockHash    []byte         `json:"hash"`
+}
+
+func (b *Block) IsValid() bool {
+	panic("unimplemented")
 }
 
 func NewBlock(prevHash []byte, nonce int, blockNumber uint64, smartContract *SmartContract) *Block {
@@ -109,4 +114,50 @@ func (b *Block) MineBlock() {
 
 		b.Nonce = nonce // after variable updates the methods local types of that `struct`, must also validate all objects methods, implementation requirements where all code workflow is performing, by setting now, that property/attribute of a struct using methods signatures type parameters being passed as objects when it performs calculations via object variables/properties to guarantee types are used properly when structs, or interfaces exist and where they are supposed to have a type of object or a property or type with members or interfaces implementations in a method signatures with data properties/types during software operation, to prevent runtime code/workflow crashes due to miss implementation of proper methods/variables parameters implementations from methods with implementation signature of struct or objects during development of go project using their implementation/types during software implementation workflows of project when method signatures require a concrete types by a object and method implementations.
 	}
+}
+
+// DeepCopy creates a deep copy of the Block instance.  This is crucial to avoid
+// modifying the original block when updating the blockchain during consensus.
+func (b *Block) DeepCopy() *Block {
+	copiedTransactions := make([]*Transaction, len(b.Transactions))
+	for i, tx := range b.Transactions {
+		copiedTransactions[i] = tx.DeepCopying() // Call DeepCopy for transactions
+	}
+
+	copiedData := &SmartContract{} // Initialize a copy of the SmartContract data
+
+	if b.Data != nil {
+		copiedCode := make([]byte, len(b.Data.Code))
+		copiedDataBytes := make([]byte, len(b.Data.Data))
+		copy(copiedCode, b.Data.Code)
+		copy(copiedDataBytes, b.Data.Data)
+		copiedData = &SmartContract{
+			Code: copiedCode,
+			Data: copiedDataBytes,
+		}
+
+	}
+
+	copiedPrevHash := make([]byte, len(b.PrevHash))
+	copy(copiedPrevHash, b.PrevHash)
+
+	copiedHash := make([]byte, len(b.BlockHash))
+	copy(copiedHash, b.BlockHash)
+
+	return &Block{
+		BlockNumber:  b.BlockNumber,
+		PrevHash:     copiedPrevHash,
+		Timestamp:    b.Timestamp,
+		Nonce:        b.Nonce,
+		Transactions: copiedTransactions,
+		Data:         copiedData,
+		BlockHash:    copiedHash,
+	}
+}
+
+func generateHash(prevHash []byte, timestamp int64, data string, nonce int) string {
+
+	dataToHash := fmt.Sprintf("%s%d%s%d", string(prevHash), timestamp, data, nonce) // remove as it is incorrect use of Hash on our Block
+	h := sha256.Sum256([]byte(dataToHash))
+	return hex.EncodeToString(h[:])
 }

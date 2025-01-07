@@ -7,7 +7,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"strconv"
+
 	"time"
 )
 
@@ -42,19 +42,22 @@ func main() {
 		}
 
 		db := NewLevelDB() // Proper object instance based on implementation details from those structs.
+		genesisBlock := NewBlock([]byte{}, 0, 0, nil)
+		blockchain, err := NewBlockchain(genesisBlock, config.MinersAddress, db)
+		if err != nil {
+			log.Fatalf("Failed to create blockchain: %v", err)
+		}
 		defer db.Close()
-		chainAddress := "http://127.0.0.1:" + strconv.Itoa(int(config.Port))
-		genesisBlock := Block{}
-		blockchain1 := NewBlockchain(&genesisBlock, chainAddress, db)
-		blockchain1.Peers[blockchain1.ChainAddress] = true
-		bcs := NewBlockchainServer(config.Port, blockchain1, chainAddress) // Use configuration parameters passed by type instead of local hardcoded properties.
+		blockchain.Peers[blockchain.ChainAddress] = true
+		bcs := NewBlockchainServer(config.Port, blockchain, config.MinersAddress) // Use configuration parameters passed by type instead of local hardcoded properties.
 		go bcs.Start()
-		go blockchain1.ProofOfWorkMining(config.MinersAddress)
-		go blockchain1.DialAndUpdatePeers()
+		go blockchain.ProofOfWorkMining(config.MinersAddress, blockchain.ConsensusManager)
+		go blockchain.DialAndUpdatePeers()
 
-		cons := NewConsensusManager() // Creates proper struct of a defined `ConsensusManager` that implements interface or method parameters of a certain struct and those required workflow steps that tests require using that new type variable that now is available by code design when implementations for type validation is being enforced with object implementation.
+		tp := NewTransactionPool()                // Create and initialize
+		cm := NewConsensusManager(blockchain, tp) // Creates proper struct of a defined `ConsensusManager` that implements interface or method parameters of a certain struct and those required workflow steps that tests require using that new type variable that now is available by code design when implementations for type validation is being enforced with object implementation.
 
-		go blockchain1.updateBlockchain(cons)
+		go blockchain.updateBlockchain(cm)
 		time.Sleep(20 * time.Second)
 	}
 }
