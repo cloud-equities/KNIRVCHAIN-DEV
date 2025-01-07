@@ -1,56 +1,87 @@
 package main
 
 import (
+	"KNIRVCHAIN-DEV/constants"
+	"bytes"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 )
 
 func TestChainStartup(t *testing.T) {
-
 	tempDir := "test_main_chain"
-	defer os.RemoveAll(tempDir) // clean created resources
+	defer os.RemoveAll(tempDir)
 	dbPath := filepath.Join(tempDir, "knirv.db")
+	var wg sync.WaitGroup
+	var outputString string
 
-	// Updated to use the module import path correctly to specify root main go file execution within modules import location.
-	cmd := exec.Command("go", "run", "KNIRVCHAIN-DEV/main.go", "-port", "5000", "-miners_address", "testAddress", "-database_path", dbPath)
-
-	cmd.Dir = filepath.Join("..", "chain") // specify subdirectory for methods location. and scope when running, instead of relying on scope without knowing the intended use of local or method resources or struct or objects variables in memory, this means we can verify specific implementation to be called and that methods calls and struct use and methods or operations work for implementation by type.
-
-	if runtime.GOOS == "windows" { // check for systems to run based on local or os dependent types. this will only use a command implementation specific for what operating system types of file formats will call a method. For Linux use case: it would call just with one go run or go executable format for the file
-		// Same logic here for windows by replacing path if required, or just calling `main.go` as is if under a correct location or path, but making sure the go module root path location is also there with main.go being called using the go modules project/package root import path or name of that package/project or module declaration, when not under local package use for single compilation like so when a single file is defined, `go run main.go`, when this package, needs imports of packages or other file modules, the path of import has to also be used with the root go module declared for the project being tested during development.
-		cmd = exec.Command("go", "run", "KNIRVCHAIN-DEV/main.go", "-port", "5000", "-miners_address", "testAddress", "-database_path", dbPath)
+	wg.Add(1)
+	testConfig := Config{ // defining custom parameters instead via environment
+		Port:          5000,
+		MinersAddress: "testAddress",
+		DatabasePath:  dbPath, // Corrected tests to always define test configs when tests perform validation steps from workflows implementations
 	}
+	go func() {
+		defer wg.Done()
+		// Set command-line arguments for test execution from this config variable that implements interface struct and its properties types properly using type variables to have implementations and testing workflow from software running with methods as are defined by each object implementation during the workflow process and those logic that test validations enforce.
+		os.Args = []string{"cmd", "-port", strconv.Itoa(int(testConfig.Port)), "-miners_address", testConfig.MinersAddress, "-database_path", testConfig.DatabasePath}
 
-	output, err := cmd.CombinedOutput()
-	if err != nil {
-		t.Fatalf("chain did not execute without error: %v %s:", err, output)
+		main() // Use method in tests
+
+	}()
+	time.Sleep(25 * time.Second)
+	outputString = captureOutput(t, func() {
+		fmt.Println("checking messages")
+	})
+	logPrefix := constants.BLOCKCHAIN_NAME + ":"
+	messagesToCheck := []string{
+		logPrefix + " Starting the consensus algorithm...\n",
+		logPrefix + " Mined block number:\n",
 	}
-
-	outputString := string(output)                                              // Use output as a string and make checks for required parameters implementation for local or unit test requirements based on text verification in those logs as is defined during testing method workflows for code validation.
-	if !strings.Contains(outputString, "Starting the consensus algorithm...") { // specific outputs or methods or string verification implementations that are clearly stated or declared by requirements or system usage scenarios.
-		t.Errorf("Consensus algorythm message is missing from %v", outputString)
+	for _, msg := range messagesToCheck {
+		if !strings.Contains(outputString, msg) {
+			t.Errorf("Message %q is missing from output: \n%v", msg, outputString)
+		}
 	}
-
-	if !strings.Contains(outputString, "Mined block number:") {
-		t.Errorf("Miner message has not appeared: %v", outputString)
-
-	}
+	// check for processes
 	cmd2 := exec.Command("tasklist")
 	if runtime.GOOS != "windows" {
 		cmd2 = exec.Command("ps", "-ef")
 	}
 	output2, err := cmd2.CombinedOutput()
 	if err != nil {
-		t.Fatalf("error getting tasks: %v: %v", err, string(output2))
+		t.Fatalf("Error getting tasks: %v: %v", err, string(output2))
 	}
-
-	if strings.Contains(string(output2), fmt.Sprintf(":5000")) { // using this we can see that type checks, test implementations and scope checking that requires these operations where values from resource parameters should only apply and verify the state of your methods.
-		t.Fatalf("ports were leaked due to incorrect testing resource cleanup: %s", string(output2)) // if code fails these core implementation and their basic requirements and are visible via errors, that can now be addressed.
-
+	if strings.Contains(string(output2), fmt.Sprintf(":5000")) {
+		t.Fatalf("Ports were leaked due to incorrect testing resource cleanup: %s", string(output2))
 	}
+	wg.Wait()
+}
+func captureOutput(t *testing.T, f func()) string {
+	old := os.Stdout
+	r, w, err := os.Pipe()
+	if err != nil {
+		t.Fatalf("os pipe creation failed: %v", err)
+	}
+	os.Stdout = w
+	out := make(chan string)
+	go func() {
+		var buf bytes.Buffer
+		f()
+		w.Close()
+		if _, err := io.Copy(&buf, r); err != nil {
+			t.Errorf("Error reading from pipe: %v", err)
+		}
+		out <- buf.String()
+	}()
+	os.Stdout = old
+	return <-out
 }

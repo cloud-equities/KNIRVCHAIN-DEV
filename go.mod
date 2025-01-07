@@ -2,4 +2,8 @@ module KNIRVCHAIN-DEV
 
 go 1.23.3
 
-require github.com/mattn/go-sqlite3 v1.14.24
+replace github.com/cloud-equities/KNIRVCHAIN-DEV v1.2.3 => ./
+
+require github.com/syndtr/goleveldb v1.0.0
+
+require github.com/golang/snappy v0.0.0-20180518054509-2e65f85255db // indirect
