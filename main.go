@@ -50,12 +50,14 @@ func main() {
 		defer db.Close()
 		blockchain.Peers[blockchain.ChainAddress] = true
 		bcs := NewBlockchainServer(config.Port, blockchain, config.MinersAddress) // Use configuration parameters passed by type instead of local hardcoded properties.
-		go bcs.Start()
-		go blockchain.ProofOfWorkMining(config.MinersAddress, blockchain.ConsensusManager)
-		go blockchain.DialAndUpdatePeers()
 
 		tp := NewTransactionPool()                // Create and initialize
 		cm := NewConsensusManager(blockchain, tp) // Creates proper struct of a defined `ConsensusManager` that implements interface or method parameters of a certain struct and those required workflow steps that tests require using that new type variable that now is available by code design when implementations for type validation is being enforced with object implementation.
+		blockchain.ConsensusManager = cm
+
+		go bcs.Start()
+		go blockchain.ProofOfWorkMining(config.MinersAddress, cm) // Pass cm here
+		go blockchain.DialAndUpdatePeers()
 
 		go blockchain.updateBlockchain(cm)
 		time.Sleep(20 * time.Second)

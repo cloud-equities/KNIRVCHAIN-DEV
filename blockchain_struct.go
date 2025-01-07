@@ -314,7 +314,7 @@ func (bc *BlockchainStruct) ProofOfWorkMining(minersAddress string, cm *Consensu
 	knirvlog.LogInfo("Starting to Mine...") // using local system for implementation. validation. with types when those logs occur, as workflow.
 
 	nonce := 0
-	cons := NewConsensusManager(bc, bc.ConsensusManager.TransactionPool) // Implementation type implementation from that specific type of object to create correct interfaces to call that objects where parameters types from project are checked and validated for tests workflows
+	cons := cm // Implementation type implementation from that specific type of object to create correct interfaces to call that objects where parameters types from project are checked and validated for tests workflows
 	go func() {
 		cons.RunConsensus() // also properly passing implementation type of that code.
 	}()
