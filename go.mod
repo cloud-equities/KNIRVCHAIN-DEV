@@ -1,0 +1,3 @@
+module KNIRVCHAIN-DEV
+
+go 1.23.3
